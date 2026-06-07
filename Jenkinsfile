@@ -17,7 +17,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/HarshithNA/K8-assignment',
+                    url: 'https://github.com/HarshithNA/Project-k8',
                     credentialsId: 'git-credentials'
             }
         }
@@ -73,21 +73,25 @@ pipeline {
                     string(credentialsId: 'argo-token',  variable: 'ARGO_TOKEN')
                 ]) {
                     sh """
+                        # Update image tag
                         sed -i 's|tag:.*|tag: "${BUILD_NUMBER}"|' \
                           k8s/helm/values.yaml
 
+                        
                         git config user.email "jenkins@ci.local"
                         git config user.name  "Jenkins"
                         git add k8s/helm/values.yaml
                         git commit -m "ci: update image tag to ${BUILD_NUMBER}"
-                        git push https://\${GIT_USER}:\${GIT_PASS}@github.com/HarshithNA/K8-assignment main
+                        git push https://\${GIT_USER}:\${GIT_PASS}@github.com/HarshithNA/Project-k8 main
 
+                        
                         argocd app sync my-app \
                             --server \${ARGO_SERVER} \
                             --auth-token \${ARGO_TOKEN} \
                             --insecure \
                             --grpc-web
 
+                        
                         argocd app wait my-app \
                             --server \${ARGO_SERVER} \
                             --auth-token \${ARGO_TOKEN} \
@@ -101,8 +105,15 @@ pipeline {
     }
 
     post {
-        success { echo "✅ Build #${BUILD_NUMBER} deployed successfully" }
-        failure { echo "❌ Build #${BUILD_NUMBER} failed" }
-        always  { cleanWs() }
+        success {
+            echo "✅ Build #${BUILD_NUMBER} deployed successfully"
+        }
+        failure {
+            echo "❌ Build #${BUILD_NUMBER} failed"
+        }
+        always {
+            cleanWs()
+        }
     }
 }
+
