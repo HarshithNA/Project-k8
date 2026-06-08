@@ -99,7 +99,7 @@ pipeline {
                             --auth-token \${ARGO_TOKEN} \
                             --insecure \
                             --health \
-                            --timeout 120
+                            --timeout 300
                     """
                 }
             }
