@@ -1,0 +1,21 @@
+replicaCount: 2
+
+image:
+  repository: 710119226111.dkr.ecr.eu-north-1.amazonaws.com/my-app
+  pullPolicy: Always
+  tag: "1"
+
+imagePullSecrets:
+  - name: ecr-secret
+
+service:
+  type: NodePort
+  port: 8080
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
