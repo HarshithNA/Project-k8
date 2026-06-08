@@ -3,7 +3,7 @@ replicaCount: 2
 image:
   repository: 710119226111.dkr.ecr.eu-north-1.amazonaws.com/my-app
   pullPolicy: Always
-  tag: "1"
+  tag: "5"
 
 imagePullSecrets:
   - name: ecr-secret
