@@ -18,14 +18,20 @@ pipeline {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/HarshithNA/Project-k8',
-                    credentialsId: 'git-credentials'
+                    credentialsId: 'git-dredentials'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    sh "${tool 'SonarScanner'}/bin/sonar-scanner"
+                    sh """
+                        ${tool 'SonarScanner'}/bin/sonar-scanner \
+                          -Dsonar.projectKey=my-app \
+                          -Dsonar.projectName=my-app \
+                          -Dsonar.projectVersion=1.0 \
+                          -Dsonar.sources=app
+                    """
                 }
             }
         }
@@ -65,7 +71,7 @@ pipeline {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'git-credentials',
+                        credentialsId: 'git-dredentials',
                         usernameVariable: 'GIT_USER',
                         passwordVariable: 'GIT_PASS'
                     ),
@@ -73,25 +79,21 @@ pipeline {
                     string(credentialsId: 'argo-token',  variable: 'ARGO_TOKEN')
                 ]) {
                     sh """
-                        # Update image tag
                         sed -i 's|tag:.*|tag: "${BUILD_NUMBER}"|' \
                           k8s/helm/values.yaml
 
-                        
                         git config user.email "jenkins@ci.local"
                         git config user.name  "Jenkins"
                         git add k8s/helm/values.yaml
                         git commit -m "ci: update image tag to ${BUILD_NUMBER}"
                         git push https://\${GIT_USER}:\${GIT_PASS}@github.com/HarshithNA/Project-k8 main
 
-                        
                         argocd app sync my-app \
                             --server \${ARGO_SERVER} \
                             --auth-token \${ARGO_TOKEN} \
                             --insecure \
                             --grpc-web
 
-                        
                         argocd app wait my-app \
                             --server \${ARGO_SERVER} \
                             --auth-token \${ARGO_TOKEN} \
@@ -105,15 +107,8 @@ pipeline {
     }
 
     post {
-        success {
-            echo "✅ Build #${BUILD_NUMBER} deployed successfully"
-        }
-        failure {
-            echo "❌ Build #${BUILD_NUMBER} failed"
-        }
-        always {
-            cleanWs()
-        }
+        success { echo "Build #${BUILD_NUMBER} deployed successfully" }
+        failure { echo "Build #${BUILD_NUMBER} failed" }
+        always  { cleanWs() }
     }
 }
-
